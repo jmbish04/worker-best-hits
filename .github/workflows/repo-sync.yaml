@@ -1,0 +1,257 @@
+name: Repository Sync
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      force_sync:
+        description: 'Force sync all repositories'
+        required: false
+        default: 'false'
+
+env:
+  CLOUDFLARE_WORKER_URL: ${{ secrets.CLOUDFLARE_WORKER_URL }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+jobs:
+  sync-repositories:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml requests python-dateutil
+
+      - name: Create necessary directories
+        run: |
+          mkdir -p synced-data/awesome-assistants
+          mkdir -p scripts/sync
+          mkdir -p .github/sync-state
+
+      - name: Load sync configuration
+        id: load-config
+        run: |
+          python3 << 'EOF'
+          import yaml
+          import json
+
+          with open('.github/repo-sync-config.yaml', 'r') as f:
+              config = yaml.safe_load(f)
+
+          repos = config.get('repositories', [])
+          enabled_repos = [r for r in repos if r.get('enabled', True)]
+
+          print(f"Found {len(enabled_repos)} enabled repositories")
+          with open('enabled_repos.json', 'w') as f:
+              json.dump(enabled_repos, f)
+          EOF
+
+      - name: Sync repositories
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+          import subprocess
+          import hashlib
+          from pathlib import Path
+          from datetime import datetime
+
+          def get_file_hash(file_path):
+              """Calculate SHA256 hash of a file"""
+              if not os.path.exists(file_path):
+                  return None
+              sha256_hash = hashlib.sha256()
+              with open(file_path, "rb") as f:
+                  for byte_block in iter(lambda: f.read(4096), b""):
+                      sha256_hash.update(byte_block)
+              return sha256_hash.hexdigest()
+
+          def load_sync_state(repo_name):
+              """Load last sync state for a repository"""
+              state_file = f".github/sync-state/{repo_name}.json"
+              if os.path.exists(state_file):
+                  with open(state_file, 'r') as f:
+                      return json.load(f)
+              return {}
+
+          def save_sync_state(repo_name, state):
+              """Save sync state for a repository"""
+              state_file = f".github/sync-state/{repo_name}.json"
+              with open(state_file, 'w') as f:
+                  json.dump(state, f, indent=2)
+
+          # Load enabled repositories
+          with open('enabled_repos.json', 'r') as f:
+              repos = json.load(f)
+
+          force_sync = os.environ.get('FORCE_SYNC', 'false').lower() == 'true'
+          changes_detected = False
+
+          for repo in repos:
+              repo_name = repo['name']
+              repo_url = repo['url']
+              branch = repo.get('branch', 'main')
+
+              print(f"\n{'='*60}")
+              print(f"Processing: {repo_name}")
+              print(f"{'='*60}")
+
+              # Load previous sync state
+              sync_state = load_sync_state(repo_name)
+
+              # Clone or update the remote repository to a temp location
+              temp_dir = f"/tmp/sync-{repo_name}"
+              if os.path.exists(temp_dir):
+                  subprocess.run(['rm', '-rf', temp_dir], check=True)
+
+              print(f"Cloning {repo_url}...")
+              result = subprocess.run(
+                  ['git', 'clone', '--depth=1', '--branch', branch, repo_url, temp_dir],
+                  capture_output=True,
+                  text=True
+              )
+
+              if result.returncode != 0:
+                  print(f"Error cloning repository: {result.stderr}")
+                  continue
+
+              # Process files to sync
+              files_to_sync = repo.get('files_to_sync', [])
+              repo_changed = False
+
+              for file_config in files_to_sync:
+                  source = file_config['source']
+                  destination = file_config['destination']
+
+                  source_path = os.path.join(temp_dir, source)
+                  dest_path = destination
+
+                  if not os.path.exists(source_path):
+                      print(f"Warning: Source file not found: {source_path}")
+                      continue
+
+                  # Calculate hash of source file
+                  source_hash = get_file_hash(source_path)
+                  dest_hash = get_file_hash(dest_path)
+
+                  # Check if file has changed
+                  if force_sync or source_hash != dest_hash:
+                      print(f"Change detected in {source}")
+                      print(f"  Source hash: {source_hash}")
+                      print(f"  Dest hash: {dest_hash}")
+
+                      # Copy file
+                      os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+                      subprocess.run(['cp', source_path, dest_path], check=True)
+
+                      repo_changed = True
+                      changes_detected = True
+
+                      # Update sync state
+                      if 'files' not in sync_state:
+                          sync_state['files'] = {}
+                      sync_state['files'][source] = {
+                          'hash': source_hash,
+                          'last_synced': datetime.utcnow().isoformat(),
+                          'destination': destination
+                      }
+                  else:
+                      print(f"No changes detected in {source}")
+
+              # Run post-sync actions if changes were detected
+              if repo_changed:
+                  print(f"\nRunning post-sync actions for {repo_name}...")
+                  post_sync_actions = repo.get('post_sync_actions', [])
+
+                  for action in post_sync_actions:
+                      if action['type'] == 'python_script':
+                          script = action['script']
+                          args = action.get('args', [])
+
+                          # Replace environment variables in args
+                          processed_args = []
+                          for arg in args:
+                              if isinstance(arg, str) and '${' in arg:
+                                  # Simple environment variable substitution
+                                  for key, value in os.environ.items():
+                                      arg = arg.replace(f'${{{key}}}', value)
+                              processed_args.append(arg)
+
+                          # Mark that post-sync actions need to be run
+                          sync_state['post_sync_pending'] = {
+                              'script': script,
+                              'args': processed_args,
+                              'timestamp': datetime.utcnow().isoformat()
+                          }
+
+              # Save sync state
+              save_sync_state(repo_name, sync_state)
+
+              # Clean up temp directory
+              subprocess.run(['rm', '-rf', temp_dir], check=True)
+
+          # Set output for next steps
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"changes_detected={'true' if changes_detected else 'false'}\n")
+
+          print(f"\n{'='*60}")
+          print(f"Sync complete. Changes detected: {changes_detected}")
+          print(f"{'='*60}")
+          EOF
+        env:
+          FORCE_SYNC: ${{ github.event.inputs.force_sync }}
+
+      - name: Run post-sync processing
+        if: steps.sync-repositories.outputs.changes_detected == 'true'
+        run: |
+          # Check if process_assistants.py exists, if not create a placeholder
+          if [ ! -f "scripts/sync/process_assistants.py" ]; then
+            echo "Post-sync script will be created in next step"
+          else
+            python3 scripts/sync/process_assistants.py \
+              --file synced-data/awesome-assistants/assistants.yaml \
+              --cloudflare-endpoint "${CLOUDFLARE_WORKER_URL}/assistants"
+          fi
+
+      - name: Commit and push changes
+        if: steps.sync-repositories.outputs.changes_detected == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add synced-data/
+          git add .github/sync-state/
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: sync repository data
+
+Synced data from configured repositories
+- awesome-assistants/awesome-assistants
+
+Automated sync performed at $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+            git push
+          fi
+
+      - name: Report sync status
+        if: always()
+        run: |
+          echo "Repository sync completed"
+          echo "Status: ${{ job.status }}"
