@@ -4,6 +4,7 @@ import {
   Ai, // Assuming Ai type is available or importable
 } from "@cloudflare/ai-utils";
 import type { Tool, Message } from "@cloudflare/ai-utils"; // Import relevant types
+import type { Env } from "../env";
 
 // Define common configuration options for createToolsFromOpenAPISpec if needed
 // For example, adding default headers like User-Agent
@@ -108,10 +109,6 @@ export class FunctionCallingAI {
 }
 
 // --- Example Usage within a Cloudflare Worker ---
-
-export interface Env {
-  AI: Ai; // Ensure you have the AI binding configured in your wrangler.toml
-}
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
