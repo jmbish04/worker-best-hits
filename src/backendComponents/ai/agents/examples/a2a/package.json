@@ -1,0 +1,19 @@
+{
+  "name": "@cloudflare/agents-a2a-example",
+  "private": true,
+  "author": {
+    "email": "matt@stackone.com",
+    "name": "Matt Carey"
+  },
+  "dependencies": {
+    "@a2a-js/sdk": "^0.2.2",
+    "hono": "^4.9.10"
+  },
+  "keywords": [],
+  "scripts": {
+    "cli": "npx tsx src/cli.ts",
+    "start": "vite dev",
+    "deploy": "vite build && wrangler deploy"
+  },
+  "type": "module"
+}
