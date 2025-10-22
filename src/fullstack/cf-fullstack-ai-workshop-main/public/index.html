@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KnowledgeBase Assistant</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>"
+    />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  </head>
+  <body>
+    <div class="app-container">
+      <header>
+        <h1>KnowledgeBase Assistant</h1>
+        <p>Upload documents and chat with your knowledge base</p>
+      </header>
+
+      <div class="main-content">
+        <div class="sidebar">
+          <div class="upload-section">
+            <h2>Add Knowledge</h2>
+            <form id="upload-form">
+              <input type="file" id="document-upload" multiple />
+              <button type="submit">Upload</button>
+            </form>
+            <div class="documents-list">
+              <h3>Your Documents</h3>
+              <ul id="documents"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-container">
+          <div id="chat-messages" class="messages"></div>
+          <form id="chat-form" class="chat-input">
+            <input type="text" id="user-input" placeholder="Ask a question about your documents..." />
+            <button type="submit">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
