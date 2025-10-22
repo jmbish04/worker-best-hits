@@ -1,4 +1,4 @@
-import { Env } from "./env";
+import type { Env } from "../env";
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
