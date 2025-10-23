@@ -146,14 +146,19 @@ class AssistantSyncManager:
             'unchanged': unchanged_assistants
         }
 
-    def sync_to_cloudflare(self, changes: Dict[str, List[Dict[str, Any]]]) -> bool:
+    def sync_to_cloudflare(self, changes: Dict[str, List[Dict[str, Any]]], dry_run: bool = False) -> bool:
         """
         Sync changes to Cloudflare Worker.
+
+        Args:
+            changes: Dictionary of changes to sync
+            dry_run: If True, only print operations without sending to Cloudflare
 
         Returns:
             True if sync was successful
         """
-        print("\nSyncing to Cloudflare Worker...")
+        mode = "DRY RUN" if dry_run else "Syncing to Cloudflare Worker"
+        print(f"\n{mode}...")
 
         operations = []
 
@@ -214,6 +219,19 @@ class AssistantSyncManager:
             print("No changes to sync")
             return True
 
+        # In dry-run mode, print operations instead of sending them
+        if dry_run:
+            payload = {
+                'operations': operations,
+                'source': 'awesome-assistants-sync',
+                'timestamp': datetime.utcnow().isoformat()
+            }
+
+            print(f"\n[DRY RUN] Would send {len(operations)} operations to Cloudflare Worker:")
+            print(json.dumps(payload, indent=2))
+            print("\n[DRY RUN] No actual changes were made")
+            return True
+
         # Send batch update to Cloudflare Worker
         try:
             payload = {
@@ -247,10 +265,19 @@ class AssistantSyncManager:
 
             return False
 
-    def run_sync(self, yaml_file: str) -> bool:
-        """Run the complete sync process"""
+    def run_sync(self, yaml_file: str, dry_run: bool = False) -> bool:
+        """
+        Run the complete sync process
+
+        Args:
+            yaml_file: Path to the YAML file to sync
+            dry_run: If True, only show what would be synced without making changes
+
+        Returns:
+            True if sync was successful
+        """
         print("="*60)
-        print("Assistant Sync Process")
+        print("Assistant Sync Process" + (" (DRY RUN)" if dry_run else ""))
         print("="*60)
 
         try:
@@ -264,11 +291,11 @@ class AssistantSyncManager:
             changes = self.detect_changes(yaml_assistants, current_assistants)
 
             # Sync to Cloudflare
-            success = self.sync_to_cloudflare(changes)
+            success = self.sync_to_cloudflare(changes, dry_run=dry_run)
 
             print("\n" + "="*60)
             if success:
-                print("Sync completed successfully")
+                print("Sync completed successfully" + (" (DRY RUN - no changes made)" if dry_run else ""))
             else:
                 print("Sync completed with errors")
             print("="*60)
@@ -321,7 +348,7 @@ def main():
     )
 
     # Run sync
-    success = sync_manager.run_sync(args.file)
+    success = sync_manager.run_sync(args.file, dry_run=args.dry_run)
 
     sys.exit(0 if success else 1)
 

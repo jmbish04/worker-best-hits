@@ -22,8 +22,7 @@ import sys
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Set
 import requests
-from dataclasses import dataclass, asdict
-from pathlib import Path
+from dataclasses import dataclass
 
 
 @dataclass

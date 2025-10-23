@@ -57,6 +57,7 @@ jobs:
           CATEGORIES: ${{ github.event.inputs.categories }}
 
       - name: Generate discovery report
+        id: report
         run: |
           python3 << 'EOF'
           import json
@@ -126,7 +127,7 @@ Total recommendations: {data.get('total_recommendations', 0)}
           EOF
 
       - name: Commit discovery results
-        if: steps.discovery.outputs.has_recommendations == 'true'
+        if: steps.report.outputs.has_recommendations == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -151,6 +152,6 @@ Automated discovery run"
         run: |
           echo "Repository discovery completed"
           echo "Status: ${{ job.status }}"
-          if [ -f "${{ steps.discovery.outputs.report_file }}" ]; then
-            echo "Report available at: ${{ steps.discovery.outputs.report_file }}"
+          if [ -f "${{ steps.report.outputs.report_file }}" ]; then
+            echo "Report available at: ${{ steps.report.outputs.report_file }}"
           fi

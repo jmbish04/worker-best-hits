@@ -63,6 +63,7 @@ jobs:
           EOF
 
       - name: Sync repositories
+        id: sync-repositories
         run: |
           python3 << 'EOF'
           import json
