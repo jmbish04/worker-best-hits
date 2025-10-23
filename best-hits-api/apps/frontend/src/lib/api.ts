@@ -1,38 +1,227 @@
-import type { Message, TemplateIndex, Thread } from "./types";
+const safeCompare = async (a, b) => {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const encoder = new TextEncoder();
+  const aEncoded = encoder.encode(a);
+  const bEncoded = encoder.encode(b);
+  if (aEncoded.length !== bEncoded.length) return false;
+  return await crypto.subtle.timingSafeEqual(aEncoded, bEncoded);
+};
 
-const API_BASE = (globalThis as any).__WORKER_API_BASE__ ?? "https://worker.example.com";
-
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers ?? {})
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+export const validateApiTokenResponse = async (request, apiToken) => {
+  const successful = await validateApiToken(request, apiToken);
+  if (!successful) {
+    return Response.json({ message: "Invalid API token" }, { status: 401 });
   }
+};
 
-  return response.json() as Promise<T>;
-}
+export const validateApiToken = async (request, apiToken) => {
+  try {
+    if (!request?.headers?.get) {
+      console.error("Invalid request object");
+      return false;
+    }
 
-export function fetchThreads(): Promise<Thread[]> {
-  return request("/api/threads");
-}
+    if (!apiToken) {
+      console.error(
+        "No API token provided. Set one as an environment variable.",
+      );
+      return false;
+    }
 
-export function fetchMessages(threadId: string): Promise<Message[]> {
-  return request(`/api/threads/${threadId}/messages`);
-}
+    const authHeader = request.headers.get("authorization");
+    const customTokenHeader = request.headers.get("x-api-token");
 
-export function postMessage(prompt: string, threadId: string | null) {
-  return request<{ threadId: string }>(`/api/threads`, {
-    method: "POST",
-    body: JSON.stringify({ prompt, threadId })
+    let tokenToValidate = customTokenHeader;
+
+    if (authHeader) {
+      if (authHeader.startsWith("Bearer ")) {
+        tokenToValidate = authHeader.substring(7);
+      } else if (authHeader.startsWith("Token ")) {
+        tokenToValidate = authHeader.substring(6);
+      } else {
+        tokenToValidate = authHeader;
+      }
+    }
+
+    if (!tokenToValidate || tokenToValidate.length === 0) return false;
+
+    return await safeCompare(apiToken.trim(), tokenToValidate.trim());
+  } catch (error) {
+    console.error("Error validating API token:", error);
+    return false;
+  }
+};
+
+export const getCustomers = async (baseUrl, apiToken) => {
+  const url = `${baseUrl}/api/customers`;
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+    },
   });
-}
+  if (response.ok) {
+    const data = await response.json();
+    return {
+      customers: data.customers,
+      success: true,
+    };
+  } else {
+    console.error("Failed to fetch customers");
+    return {
+      customers: [],
+      success: false,
+    };
+  }
+};
 
-export function fetchTemplates(): Promise<TemplateIndex> {
-  return request("/api/templates");
-}
+export const getCustomer = async (id, baseUrl, apiToken) => {
+  const response = await fetch(baseUrl + "/api/customers/" + id, {
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+    },
+  });
+  if (response.ok) {
+    const data = await response.json();
+    return {
+      customer: data.customer,
+      success: true,
+    };
+  } else {
+    console.error("Failed to fetch customers");
+    return {
+      customer: null,
+      success: false,
+    };
+  }
+};
+
+export const createCustomer = async (baseUrl, apiToken, customer) => {
+  const response = await fetch(baseUrl + "/api/customers", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(customer),
+  });
+  if (response.ok) {
+    const data = await response.json();
+    return {
+      customer: data.customer,
+      success: true,
+    };
+  } else {
+    console.error("Failed to create customer");
+    return {
+      customer: null,
+      success: false,
+    };
+  }
+};
+
+export const createSubscription = async (baseUrl, apiToken, subscription) => {
+  const response = await fetch(baseUrl + "/api/subscriptions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(subscription),
+  });
+  if (response.ok) {
+    const data = await response.json();
+    return {
+      subscription: data.subscription,
+      success: true,
+    };
+  } else {
+    console.error("Failed to create subscription");
+    return {
+      subscription: null,
+      success: false,
+    };
+  }
+};
+
+export const getSubscriptions = async (baseUrl, apiToken) => {
+  const response = await fetch(baseUrl + "/api/subscriptions", {
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+    },
+  });
+  if (response.ok) {
+    const data = await response.json();
+    return {
+      subscriptions: data.subscriptions,
+      success: true,
+    };
+  } else {
+    console.error("Failed to fetch subscriptions");
+    return {
+      subscriptions: [],
+      success: false,
+    };
+  }
+};
+
+export const getSubscription = async (id, baseUrl, apiToken) => {
+  const response = await fetch(baseUrl + "/api/subscriptions/" + id, {
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+    },
+  });
+  if (response.ok) {
+    const data = await response.json();
+    return {
+      subscription: data.subscription,
+      success: true,
+    };
+  } else {
+    console.error("Failed to fetch subscription");
+    return {
+      subscription: null,
+      success: false,
+    };
+  }
+};
+
+export const getCustomerSubscriptions = async (baseUrl, apiToken) => {
+  const response = await fetch(baseUrl + "/api/customer_subscriptions", {
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+    },
+  });
+  if (response.ok) {
+    const data = await response.json();
+    return {
+      customer_subscriptions: data.customer_subscriptions,
+      success: true,
+    };
+  } else {
+    console.error("Failed to fetch customer subscriptions");
+    return {
+      customer_subscriptions: [],
+      success: false,
+    };
+  }
+};
+
+export const runCustomerWorkflow = async (id, baseUrl, apiToken) => {
+  const response = await fetch(baseUrl + `/api/customers/${id}/workflow`, {
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+    },
+    method: "POST",
+  });
+  if (response.ok) {
+    const data = await response.json();
+    return {
+      success: true,
+    };
+  } else {
+    console.error("Failed to fetch customer subscriptions");
+    return {
+      success: false,
+    };
+  }
+};

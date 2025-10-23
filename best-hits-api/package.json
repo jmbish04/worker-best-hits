@@ -14,7 +14,10 @@
     "migrate": "cd apps/worker && wrangler d1 migrations apply DB --remote",
     "deploy": "pnpm run build && pnpm run migrate && cd apps/worker && wrangler deploy",
     "deploy:dry-run": "pnpm run build && cd apps/worker && wrangler deploy --dry-run",
-    "build-types": "cd apps/worker && wrangler types"
+    "build-types": "cd apps/worker && wrangler types",
+    "frontend:dev": "cd apps/frontend && npm run dev",
+    "frontend:build": "cd apps/frontend && npm run build",
+    "frontend:preview": "cd apps/frontend && npm run preview"
   },
   "devDependencies": {
     "turbo": "^1.13.0",

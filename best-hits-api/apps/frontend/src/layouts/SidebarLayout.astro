@@ -1,0 +1,155 @@
+---
+import '@/styles/globals.css'
+import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarInset, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { Home, Users, CreditCard, Settings, HelpCircle, Github } from 'lucide-react';
+
+const currentPath = Astro.url.pathname;
+const title = Astro.props.title || 'Best Hits API';
+const { API_TOKEN } = Astro.locals.runtime.env;
+const apiTokenSet = API_TOKEN && API_TOKEN !== '';
+---
+
+<script is:inline>
+  const getThemePreference = () => {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+      return localStorage.getItem('theme');
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  };
+  const isDark = getThemePreference() === 'dark';
+  document.documentElement.classList[isDark ? 'add' : 'remove']('dark');
+ 
+  if (typeof localStorage !== 'undefined') {
+    const observer = new MutationObserver(() => {
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  }
+</script>
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title ? `${title} - Best Hits API` : 'Best Hits API'}</title>
+  </head>
+  <body>
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div class="flex items-center gap-2 px-2 py-2">
+            <div class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <span class="text-sm font-bold">BH</span>
+            </div>
+            <div class="grid flex-1 text-left text-sm leading-tight">
+              <span class="truncate font-semibold">Best Hits API</span>
+              <span class="truncate text-xs text-sidebar-foreground/70">AI-Powered Assistant</span>
+            </div>
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/" class={currentPath === '/' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}>
+                      <Home class="size-4" />
+                      <span>Dashboard</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/admin" class={currentPath.startsWith('/admin') ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}>
+                      <Users class="size-4" />
+                      <span>Admin</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/admin/customers" class={currentPath.startsWith('/admin/customers') ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}>
+                      <Users class="size-4" />
+                      <span>Customers</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/admin/subscriptions" class={currentPath.startsWith('/admin/subscriptions') ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}>
+                      <CreditCard class="size-4" />
+                      <span>Subscriptions</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel>Support</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="https://github.com/cloudflare/templates/tree/main/saas-admin-template" target="_blank">
+                      <Github class="size-4" />
+                      <span>GitHub</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/help">
+                      <HelpCircle class="size-4" />
+                      <span>Help</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <div class="p-2">
+            <div class="flex items-center gap-2 px-2 py-1.5 text-sm text-sidebar-foreground/70">
+              <Settings class="size-4" />
+              <span>Settings</span>
+            </div>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset>
+        <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger class="-ml-1" />
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-semibold">{title}</h1>
+          </div>
+        </header>
+        <div class="flex flex-1 flex-col gap-4 p-4">
+          {!apiTokenSet && (
+            <div class="mb-4">
+              <div class="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+                <div class="flex">
+                  <div class="ml-3">
+                    <h3 class="text-sm font-medium text-destructive">API Token Missing</h3>
+                    <div class="mt-2 text-sm text-destructive/80">
+                      <p>Please set the API_TOKEN environment variable to use this application.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <slot />
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  </body>
+</html>
