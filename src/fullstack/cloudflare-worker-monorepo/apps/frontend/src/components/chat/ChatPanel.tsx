@@ -71,7 +71,7 @@ export function ChatPanel({ activeThreadId, onThreadCreated }: ChatPanelProps) {
           required
         />
         <button type="submit" className="send-button" disabled={mutation.isPending}>
-          <SendHorizonal size={20} />
+          <SendHorizontal size={20} />
           Send
         </button>
       </form>
