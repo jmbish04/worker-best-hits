@@ -2,7 +2,15 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "types": ["@cloudflare/workers-types"]
+    "types": ["@cloudflare/workers-types"],
+    "baseUrl": ".",
+    "paths": {
+      "@cloudflare/agent": ["../../packages/agent/src"],
+      "@cloudflare/data": ["../../packages/data/src"],
+      "@cloudflare/email": ["../../packages/email/src"],
+      "@cloudflare/github": ["../../packages/github/src"],
+      "@cloudflare/templates": ["../../packages/templates/src"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "../../packages/*/src"]
 }
