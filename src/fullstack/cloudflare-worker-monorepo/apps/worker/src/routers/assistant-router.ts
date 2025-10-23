@@ -7,7 +7,7 @@ const conversationService = createConversationService();
 const promptSyncService = createPromptSyncService();
 const repositoryDigestService = createRepositoryDigestService();
 
-export const createAssistantRouter = {
+export const assistantRouterHandlers = {
   handleListThreads: async (_request: Request, env: Env) => {
     const threads = await conversationService.listThreads(env);
     return json(threads);
