@@ -175,7 +175,7 @@ class RepositoryDiscovery:
 
         data = {
             'processed_repos': list(self.processed_repos),
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         }
 
         with open(self.state_file, 'w') as f:
