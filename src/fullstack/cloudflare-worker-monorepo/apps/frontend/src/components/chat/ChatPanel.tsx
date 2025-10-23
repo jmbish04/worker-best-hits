@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { SendHorizonal } from "lucide-react";
+import { SendHorizontal } from "lucide-react";
 import { fetchMessages, postMessage } from "../../lib/api";
 import { MessageBubble } from "./MessageBubble";
 import { useForm } from "../../lib/useForm";
