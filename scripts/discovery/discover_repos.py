@@ -295,7 +295,7 @@ class RepositoryDiscovery:
                     score += 10
                 elif days_since_update <= 180:
                     score += 5
-            except:
+            except ValueError:
                 pass
 
         # Fork count (max 15 points)
