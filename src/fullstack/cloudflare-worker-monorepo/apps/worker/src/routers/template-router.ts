@@ -3,7 +3,7 @@ import { createTemplateCatalogService } from "../services/template-catalog-servi
 
 const templateCatalog = createTemplateCatalogService();
 
-export const createTemplateRouter = async (_request: Request, env: Env) => {
+export const handleListTemplates = async (_request: Request, env: Env) => {
   const templates = await templateCatalog.list(env);
   return json(templates);
 };
