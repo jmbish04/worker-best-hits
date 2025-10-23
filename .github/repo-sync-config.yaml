@@ -4,7 +4,7 @@ repositories:
     branch: main
     enabled: true
     sync_strategy: incremental
-    check_interval_cron: "0 */6 * * *"  # Every 6 hours
+    check_interval_cron: "0 0 * * 0"  # Every 1 week (at 00:00 on Sunday)
     files_to_sync:
       - source: assistants.yaml
         destination: synced-data/awesome-assistants/assistants.yaml
