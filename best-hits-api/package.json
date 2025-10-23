@@ -1,0 +1,21 @@
+{
+  "name": "cloudflare-worker-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Modular Cloudflare Worker monorepo with frontend, backend, and shared agentic packages.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "migrate": "wrangler d1 migrations apply DB --remote",
+    "deploy": "npm run build && npm run migrate && wrangler deploy",
+    "build-types": "wrangler types"
+  },
+  "devDependencies": {
+    "turbo": "^1.13.0"
+  }
+}
