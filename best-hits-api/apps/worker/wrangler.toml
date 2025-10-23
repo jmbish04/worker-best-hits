@@ -1,0 +1,25 @@
+name = "best-hits-api"
+main = "src/index.ts"
+compatibility_date = "2024-03-30"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "best-hits"
+database_id = "91345eec-1835-4a1a-9215-ca02a1fb7742"
+migrations_dir = "migrations"
+
+[[kv_namespaces]]
+binding = "KV_CACHE"
+id = "cdf97035ffa74a029adad17636179c81"
+
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "best-hits"
+
+[ai]
+binding = "AI"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
