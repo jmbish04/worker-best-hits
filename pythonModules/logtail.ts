@@ -291,7 +291,7 @@ if __name__ == "__main__":
     api_key = os.getenv("LOGTAIL_API_KEY") or 'your-api-key'
 
     # Fetch Service Name from .env
-    api_key = os.getenv("PYTHON_APP_NAME") or 'your-python-service-name'
+    service_name = os.getenv("PYTHON_APP_NAME") or 'your-python-service-name'
 
     
     # API key is only used for search/analysis
