@@ -5,6 +5,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "build/**"]
     },
+    "@cloudflare/worker#build": {
+      "dependsOn": ["@cloudflare/frontend#build"],
+      "outputs": []
+    },
     "dev": {
       "cache": false
     },
