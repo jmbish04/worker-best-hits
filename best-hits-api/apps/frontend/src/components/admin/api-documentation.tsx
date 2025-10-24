@@ -59,17 +59,17 @@ export const APIDocumentation = () => {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Badge
-                  className={methodStyles(endpoint.method)}
-                  variant={
-                    endpoint.method === "GET"
-                      ? "default"
-                      : endpoint.method === "POST"
-                        ? "destructive"
-                        : endpoint.method === "PUT"
-                          ? "warning"
-                          : "secondary"
-                  }
-                >
+                  variant="default"
+                  className={cn(
+                    "text-primary-foreground",
+                    {
+                      "bg-blue-600 hover:bg-blue-500": endpoint.method === "GET",
+                      "bg-green-600 hover:bg-green-500": endpoint.method === "POST",
+                      "bg-yellow-500 hover:bg-yellow-400 text-black": endpoint.method === "PUT",
+                      "bg-destructive hover:bg-destructive/90": endpoint.method === "DELETE",
+                      "bg-secondary hover:bg-secondary/80 text-secondary-foreground": !['GET', 'POST', 'PUT', 'DELETE'].includes(endpoint.method),
+                    }
+                  )}>
                   {endpoint.method}
                 </Badge>
                 <code className="text-sm font-mono">{endpoint.path}</code>
