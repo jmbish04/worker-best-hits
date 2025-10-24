@@ -11,11 +11,16 @@
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
-    "migrate": "wrangler d1 migrations apply DB --remote",
-    "deploy": "npm run build && npm run migrate && wrangler deploy",
-    "build-types": "wrangler types"
+    "migrate": "cd apps/worker && wrangler d1 migrations apply DB --remote",
+    "deploy": "turbo run build --filter=@cloudflare/frontend && pnpm run migrate && cd apps/worker && wrangler deploy",
+    "deploy:dry-run": "pnpm run build",
+    "build-types": "cd apps/worker && wrangler types",
+    "frontend:dev": "cd apps/frontend && npm run dev",
+    "frontend:build": "cd apps/frontend && npm run build",
+    "frontend:preview": "cd apps/frontend && npm run preview"
   },
   "devDependencies": {
-    "turbo": "^1.13.0"
+    "turbo": "^1.13.0",
+    "wrangler": "^4.44.0"
   }
 }

@@ -2,5 +2,8 @@
   "name": "@cloudflare/data",
   "version": "0.1.0",
   "private": true,
-  "main": "src/index.ts"
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "echo 'No build needed for TypeScript library'"
+  }
 }
