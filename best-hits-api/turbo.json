@@ -7,7 +7,7 @@
     },
     "@cloudflare/worker#build": {
       "dependsOn": ["@cloudflare/frontend#build"],
-      "outputs": []
+      "outputs": ["dist/**"]
     },
     "dev": {
       "cache": false
